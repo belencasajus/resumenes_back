@@ -7,6 +7,7 @@ import com.resumen.isst.resumenes.repository.SuscripcionRepository;
 import com.resumen.isst.resumenes.repository.UsuarioRepository;
 
 import java.security.Principal;
+import java.time.LocalDate;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,8 +43,9 @@ public class SuscripcionController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Ya tiene una suscripcion activa. Actualice su suscripcion si lo desea");
         }
         suscripcion.setUsuario(usuario);
-        usuario.setRol(RolUsuario.LECTOR); 
-        usuario.setSuscripcion(suscripcion);
+        suscripcion.setFechaInicio(LocalDate.now());
+        suscripcion.setFechaFin(suscripcion.getFechaInicio().plusMonths(1));
+        suscripcion.setMensualidad(5.99); 
         
         usuarioRepository.save(usuario);    // No hace falta poner "suscripcionRepository.save(suscripcion)" ya que al poner cascade = CascadeType.ALL en el usuario, ya que guarda usuario y tambien suscripcion
         return ResponseEntity.status(HttpStatus.CREATED).body(suscripcionRepository.save(suscripcion));
