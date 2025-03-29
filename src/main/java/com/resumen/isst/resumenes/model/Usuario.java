@@ -3,7 +3,6 @@ package com.resumen.isst.resumenes.model;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -13,7 +12,7 @@ public class Usuario {
 
     @Id private String username;
 
-    @JsonIgnore String password;
+    String password;
 
     @Email private String email;
 
