@@ -17,7 +17,7 @@ public class Usuario {
 
     @Email private String email;
 
-    private String imagen;       //la imagen es una url
+    private String imagen;       //Guardamos la imagen como una URL
     
     @ManyToMany @JoinTable(
         name = "favoritos",
