@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:5173")
 public class SuscripcionController {
     private final SuscripcionRepository suscripcionRepository;
     private final UsuarioRepository usuarioRepository;

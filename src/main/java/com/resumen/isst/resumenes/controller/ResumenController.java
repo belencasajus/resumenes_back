@@ -22,6 +22,7 @@ import jakarta.transaction.Transactional;
 
 
 @RestController
+@CrossOrigin(origins = "http://localhost:5173")
 public class ResumenController {
     private final ResumenRepository resumenRepository;
     private final UsuarioRepository usuarioRepository;

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:5173")
 public class ContratoController {
 
     private final ContratoRepository contratoRepository;
