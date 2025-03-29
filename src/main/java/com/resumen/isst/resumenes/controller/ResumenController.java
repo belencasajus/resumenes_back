@@ -1,0 +1,184 @@
+package com.resumen.isst.resumenes.controller;
+
+import java.security.Principal;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import com.resumen.isst.resumenes.model.Contrato;
+import com.resumen.isst.resumenes.model.Resumen;
+import com.resumen.isst.resumenes.model.RolUsuario;
+import com.resumen.isst.resumenes.model.Usuario;
+import com.resumen.isst.resumenes.repository.*;
+
+import jakarta.transaction.Transactional;
+
+
+
+@RestController
+public class ResumenController {
+    private final ResumenRepository resumenRepository;
+    private final UsuarioRepository usuarioRepository;
+
+    
+    public static final Logger log = LoggerFactory.getLogger(ResumenController.class);  // Para hacer logs
+
+    public ResumenController(ResumenRepository resumenRepository, UsuarioRepository usuarioRepository) {
+        this.resumenRepository = resumenRepository;
+        this.usuarioRepository = usuarioRepository;
+    }
+
+    //Obtener los resumenes incluidos en el catálogo (resúmenes revisados)
+    @GetMapping("/resumenes")
+    List<Resumen> getResumenes() {
+        return (List<Resumen>) resumenRepository.findByRevisado(true);
+    } 
+
+    //Crear un resumen nuevo
+    @PostMapping("/resumenes")
+    ResponseEntity<?> create(@RequestBody Resumen resumen, Principal principal) {
+
+        Usuario usuario = usuarioRepository.findByUsername(principal.getName());
+
+        if(!usuario.getEsEscritor()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Solo los escritores pueden crear resúmenes");
+        }
+        
+        if(usuario.getContrato()==null){
+            Contrato contrato = new Contrato();
+            resumen.setEscritor(usuario);
+            contrato.setUsuario(usuario);
+            usuario.setContrato(contrato);
+        }
+        resumen.setRevisado(false);
+        usuario.addResumenEscrito(resumen);
+        resumenRepository.save(resumen);
+        usuarioRepository.save(usuario);
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    //Obtener un resumen 
+    @GetMapping("/resumenes/{id}")
+    ResponseEntity<Resumen> getResumen(@PathVariable Long id) {
+        return resumenRepository.findById(id).map(resumen -> ResponseEntity.ok().body(resumen)
+        ).orElse(new ResponseEntity<Resumen>(HttpStatus.NOT_FOUND));
+    }
+
+    //Eliminar un resumen (solo los administradores pueden)
+    @DeleteMapping("/resumenes/{id}")
+    @Transactional
+    ResponseEntity<?> delete(@PathVariable Long id, Principal principal) {
+        Usuario usuario = usuarioRepository.findByUsername(principal.getName());
+        Optional<Resumen> resumenOpt = resumenRepository.findById(id);
+        
+        if(usuario.getRol() != RolUsuario.ADMIN) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+        if(resumenOpt.isEmpty()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        Resumen resumen = resumenOpt.get();
+    
+        Usuario escritor = resumen.getEscritor();
+        if (escritor!= null){
+            escritor.removeResumenEscrito(resumen);
+            if(escritor.getResumenesEscritos().isEmpty()){
+                escritor.setEsEscritor(false);
+            }
+            usuarioRepository.save(escritor);
+        }
+
+        for(Usuario user: new HashSet<>(resumen.getUsuariosFavorito())) {
+            user.removeFavorito(resumen);
+            usuarioRepository.save(user);
+        }
+        for(Usuario user: new HashSet<>(resumen.getUsuariosLeido())) {
+            user.removeResumenLeido(resumen);
+            usuarioRepository.save(user);
+        }
+        resumenRepository.delete(resumen);
+        return ResponseEntity.ok().body("Resumen eliminado");
+    }
+
+    //Modificar un resumen (admin o el escritor)
+    @PutMapping("/resumenes/{id}")
+    ResponseEntity<?> update(@RequestBody Resumen newResumen, @PathVariable Long id, Principal principal) {
+        return resumenRepository.findById(id).map(resumen -> {
+            Usuario usuario = usuarioRepository.findByUsername(principal.getName());
+
+            if(usuario.getRol() != RolUsuario.ADMIN || !resumen.getEscritor().equals(usuario)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No tienes permisos para modificar este resumen");
+            }
+            resumen.setTitulo(newResumen.getTitulo());
+            resumen.setAutor(newResumen.getAutor());
+            resumen.setImagen(newResumen.getImagen());
+            resumen.setPremium(newResumen.isPremium());
+            resumen.setGenero(newResumen.getGenero());
+            resumen.setTexto(newResumen.getTexto());
+            resumen.setAudio(newResumen.getAudio());
+            resumen.setRevisado(false);  //Se pone en false para que un admin lo revise
+
+            resumenRepository.save(resumen);
+            return ResponseEntity.ok().body(resumen);
+        }).orElse(new ResponseEntity<Resumen>(HttpStatus.NOT_FOUND));
+    }
+
+    //Modificar un resumen (solo escritor o admin)
+    @PatchMapping("/resumenes/{id}")
+    ResponseEntity<?> partialUpdate(@RequestBody Resumen newResumen, @PathVariable Long id, Principal principal) {
+        return resumenRepository.findById(id).map(resumen -> {
+            Usuario usuario = usuarioRepository.findByUsername(principal.getName());
+
+            if(!resumen.getEscritor().equals(usuario) || usuario.getRol()!= RolUsuario.ADMIN) {
+                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            }
+
+            if (newResumen.getTitulo() != null) {
+                resumen.setTitulo(newResumen.getTitulo());
+            }
+            if (newResumen.getAutor() != null) {
+                resumen.setAutor(newResumen.getAutor());
+            }
+            if (newResumen.getImagen() != null) {
+                resumen.setImagen(newResumen.getImagen());
+            }
+            if (newResumen.getGenero() != null) {
+                resumen.setGenero(newResumen.getGenero());
+            }
+            if (newResumen.getTexto() != null) {
+                resumen.setTexto(newResumen.getTexto());
+            }
+            if (newResumen.getAudio() != null) {
+                resumen.setAudio(newResumen.getAudio());
+            }
+            if (newResumen.isPremium()!= resumen.isPremium()) {
+                resumen.setPremium(newResumen.isPremium());
+            }
+            resumen.setRevisado(false);  //Se pone en false para que un admin lo revise
+            resumenRepository.save(resumen);
+            return ResponseEntity.ok().body(resumen);
+
+        }).orElse(new ResponseEntity<Resumen>(HttpStatus.NOT_FOUND)); 
+    }
+
+    // Revisar un resumen (solo admin)
+    @PutMapping("/resumenes/{id}/revisar")
+    ResponseEntity<?> revisarResumen(@PathVariable Long id, Principal principal, @RequestParam boolean aprobado) {
+        return resumenRepository.findById(id).map(resumen -> {
+            Usuario usuario = usuarioRepository.findByUsername(principal.getName());
+            if(usuario.getRol()!= RolUsuario.ADMIN) {
+                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            }
+            resumen.setRevisado(aprobado);
+            resumenRepository.save(resumen);
+            return ResponseEntity.ok().body(resumen);
+        }).orElse(new ResponseEntity<Resumen>(HttpStatus.NOT_FOUND));
+    }
+
+}
