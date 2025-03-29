@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
-
+//Holaaaaaaaaaaaaaaaaaaaaa
 @Entity
 public class Usuario {
 
