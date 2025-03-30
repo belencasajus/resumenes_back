@@ -5,10 +5,15 @@ import com.resumen.isst.resumenes.model.RolUsuario;
 import com.resumen.isst.resumenes.model.Usuario;
 import com.resumen.isst.resumenes.repository.UsuarioRepository;
 
+import jakarta.servlet.http.HttpSession;
+
 import java.security.Principal;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -19,9 +24,35 @@ import org.springframework.web.bind.annotation.*;
 public class UsuarioController {
 
     private final UsuarioRepository usuarioRepository;
+    private PasswordEncoder passwordEncoder;
 
-    public UsuarioController(UsuarioRepository usuarioRepository) {
+    public UsuarioController(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials, HttpSession session) {
+        String username = credentials.get("username");
+        String password = credentials.get("password");
+
+        Usuario usuario = usuarioRepository.findByUsername(username);
+
+        if (usuario == null || !passwordEncoder.matches(password, usuario.getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario o contraseña incorrecta");
+        }
+
+        // Guarda información básica del usuario en la sesión (opcional)
+        session.setAttribute("username", usuario.getUsername());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("username", usuario.getUsername());
+        response.put("email", usuario.getEmail());
+        response.put("rol", usuario.getRol());
+        response.put("esEscritor", usuario.getEsEscritor());
+
+        return ResponseEntity.ok(response);
     }
 
     //Crear un nuevo usuario (registro)
@@ -33,10 +64,12 @@ public class UsuarioController {
         if(usuarioRepository.existsById(usuario.getUsername())) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("El nombre de usuario ya está en uso");
         }
+        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
         usuario.setRol(RolUsuario.VISITANTE);
         usuarioRepository.save(usuario);
         return new ResponseEntity<>(usuario, HttpStatus.CREATED);
     }
+
 
     //ver perfil propio
     @GetMapping("/usuarios/me")
@@ -103,4 +136,6 @@ public class UsuarioController {
         usuarioRepository.delete(usuarioAEliminar);
         return ResponseEntity.ok("Usuario eliminado");
     }
+
+    
 }
