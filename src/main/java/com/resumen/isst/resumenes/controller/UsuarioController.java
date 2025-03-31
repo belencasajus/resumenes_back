@@ -44,11 +44,13 @@ public class UsuarioController {
 
         session.setAttribute("username", usuario.getUsername());
         session.setAttribute("rol", usuario.getRol());
+    
 
         Map<String, Object> response = new HashMap<>();
         response.put("username", usuario.getUsername());
         response.put("email", usuario.getEmail());
         response.put("rol", usuario.getRol());
+        
 
         return ResponseEntity.ok(response);
     }
@@ -123,6 +125,7 @@ public class UsuarioController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } 
 
+        
         for(Resumen resumen: usuarioAEliminar.getFavoritos()){
             resumen.getUsuariosFavorito().remove(usuarioAEliminar);
         }

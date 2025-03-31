@@ -9,5 +9,5 @@ import com.resumen.isst.resumenes.model.*;
 public interface UsuarioRepository extends CrudRepository <Usuario, String> {
     Usuario findByUsername(String username);
     List<Usuario> findByEmail(String email);
-    List<Usuario> findByRol(RolUsuario rol);
+    List<Usuario> findByRol(RolUsuario rol);    // Lista de escritores (usuarios que han publicado resúmenes)
 }

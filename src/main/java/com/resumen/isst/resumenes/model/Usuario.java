@@ -32,9 +32,9 @@ public class Usuario {
         ) private Set<Resumen> resumenesLeidos = new HashSet<>();
         
     private RolUsuario rol = RolUsuario.VISITANTE;
-    
 
     @OneToOne(mappedBy = "usuario", cascade= CascadeType.ALL, orphanRemoval=true) private Suscripcion suscripcion;
+
 
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true) private Set<Valoracion> valoraciones = new HashSet<>();
 
@@ -42,8 +42,8 @@ public class Usuario {
     }
 
     public Usuario(String username, String password, @Email String email, String imagen, Set<Resumen> favoritos,
-            Set<Resumen> resumenesLeidos, RolUsuario rol, boolean esEscritor, Suscripcion suscripcion,
-            Set<Resumen> resumenesEscritos, Set<Valoracion> valoraciones) {
+            Set<Resumen> resumenesLeidos, RolUsuario rol, Suscripcion suscripcion,
+            Set<Valoracion> valoraciones) {
         this.username = username;
         this.password = password;
         this.email = email;
@@ -110,6 +110,7 @@ public class Usuario {
         this.rol = rol;
     }
 
+ 
     public Set<Resumen> getResumenesLeidos() {
         return resumenesLeidos;
     }
@@ -129,6 +130,8 @@ public class Usuario {
             suscripcion.setUsuario(this);
         }
     }
+
+
 
     public Set<Valoracion> getValoraciones() {
         return valoraciones;
@@ -158,7 +161,6 @@ public class Usuario {
         this.resumenesLeidos.remove(resumen);
         resumen.getUsuariosLeido().remove(this);
     }
-
 
 
     public void addValoracion(Valoracion valoracion) {
