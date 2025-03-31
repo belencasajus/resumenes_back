@@ -1,6 +1,5 @@
 package com.resumen.isst.resumenes.controller;
 
-import java.security.Principal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +16,7 @@ import com.resumen.isst.resumenes.model.RolUsuario;
 import com.resumen.isst.resumenes.model.Usuario;
 import com.resumen.isst.resumenes.repository.*;
 
+import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
 
 
@@ -38,14 +38,20 @@ public class ResumenController {
     //Obtener los resumenes incluidos en el catálogo (resúmenes revisados)
     @GetMapping("/resumenes")
     List<Resumen> getResumenes() {
-        return (List<Resumen>) resumenRepository.findByRevisado(true);
+        //return (List<Resumen>) resumenRepository.findByRevisado(true); //cambiar a true
+        return (List<Resumen>) resumenRepository.findAll();
     } 
 
     //Crear un resumen nuevo
     @PostMapping("/resumenes")
-    ResponseEntity<?> create(@RequestBody Resumen resumen, Principal principal) {
+    ResponseEntity<?> create(@RequestBody Resumen resumen, HttpSession session) {
 
-        Usuario usuario = usuarioRepository.findByUsername(principal.getName());
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autenticado");
+        }
+
+        Usuario usuario = usuarioRepository.findByUsername(username);
 
         if(!usuario.getEsEscritor()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Solo los escritores pueden crear resúmenes");
@@ -66,16 +72,38 @@ public class ResumenController {
 
     //Obtener un resumen 
     @GetMapping("/resumenes/{id}")
-    ResponseEntity<Resumen> getResumen(@PathVariable Long id) {
-        return resumenRepository.findById(id).map(resumen -> ResponseEntity.ok().body(resumen)
-        ).orElse(new ResponseEntity<Resumen>(HttpStatus.NOT_FOUND));
+    ResponseEntity<?> getResumen(@PathVariable Long id, HttpSession session) {
+
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Usuario no autenticado");
+        }
+
+        Usuario usuarioActual = usuarioRepository.findByUsername(username);
+        if (usuarioActual == null) {
+            return  ResponseEntity.status(HttpStatus.FORBIDDEN).body("Usuario no autenticado");
+        }
+        Resumen resumen = resumenRepository.findById(id).orElse(null);
+        if (resumen == null){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        if(usuarioActual.getRol()== RolUsuario.VISITANTE && resumen.isPremium()) {
+             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No se puede ver resúmenes premium como visitante");
+        }
+        return ResponseEntity.ok(resumen);
     }
 
     //Eliminar un resumen (solo los administradores pueden)
     @DeleteMapping("/resumenes/{id}")
     @Transactional
-    ResponseEntity<?> delete(@PathVariable Long id, Principal principal) {
-        Usuario usuario = usuarioRepository.findByUsername(principal.getName());
+    ResponseEntity<?> delete(@PathVariable Long id, HttpSession session ) {
+
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Usuario no autenticado");
+        }
+
+        Usuario usuario = usuarioRepository.findByUsername(username);
         Optional<Resumen> resumenOpt = resumenRepository.findById(id);
         
         if(usuario.getRol() != RolUsuario.ADMIN) {
@@ -109,9 +137,15 @@ public class ResumenController {
 
     //Modificar un resumen (admin o el escritor)
     @PutMapping("/resumenes/{id}")
-    ResponseEntity<?> update(@RequestBody Resumen newResumen, @PathVariable Long id, Principal principal) {
+    ResponseEntity<?> update(@RequestBody Resumen newResumen, @PathVariable Long id, HttpSession session) {
+
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Usuario no autenticado");
+        }
+
         return resumenRepository.findById(id).map(resumen -> {
-            Usuario usuario = usuarioRepository.findByUsername(principal.getName());
+            Usuario usuario = usuarioRepository.findByUsername(username);
 
             if(usuario.getRol() != RolUsuario.ADMIN || !resumen.getEscritor().equals(usuario)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No tienes permisos para modificar este resumen");
@@ -132,9 +166,14 @@ public class ResumenController {
 
     //Modificar un resumen (solo escritor o admin)
     @PatchMapping("/resumenes/{id}")
-    ResponseEntity<?> partialUpdate(@RequestBody Resumen newResumen, @PathVariable Long id, Principal principal) {
+    ResponseEntity<?> partialUpdate(@RequestBody Resumen newResumen, @PathVariable Long id, HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Usuario no autenticado");
+        }
+
         return resumenRepository.findById(id).map(resumen -> {
-            Usuario usuario = usuarioRepository.findByUsername(principal.getName());
+            Usuario usuario = usuarioRepository.findByUsername(username);
 
             if(!resumen.getEscritor().equals(usuario) || usuario.getRol()!= RolUsuario.ADMIN) {
                 return new ResponseEntity<>(HttpStatus.FORBIDDEN);
@@ -170,9 +209,14 @@ public class ResumenController {
 
     // Revisar un resumen (solo admin)
     @PutMapping("/resumenes/{id}/revisar")
-    ResponseEntity<?> revisarResumen(@PathVariable Long id, Principal principal, @RequestParam boolean aprobado) {
+    ResponseEntity<?> revisarResumen(@PathVariable Long id, HttpSession session, @RequestParam boolean aprobado) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Usuario no autenticado");
+        }
+
         return resumenRepository.findById(id).map(resumen -> {
-            Usuario usuario = usuarioRepository.findByUsername(principal.getName());
+            Usuario usuario = usuarioRepository.findByUsername(username);
             if(usuario.getRol()!= RolUsuario.ADMIN) {
                 return new ResponseEntity<>(HttpStatus.FORBIDDEN);
             }

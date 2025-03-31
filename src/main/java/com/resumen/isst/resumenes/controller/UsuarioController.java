@@ -7,7 +7,6 @@ import com.resumen.isst.resumenes.repository.UsuarioRepository;
 
 import jakarta.servlet.http.HttpSession;
 
-import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 
 public class UsuarioController {
 
@@ -43,7 +42,6 @@ public class UsuarioController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario o contraseña incorrecta");
         }
 
-        // Guarda información básica del usuario en la sesión (opcional)
         session.setAttribute("username", usuario.getUsername());
         session.setAttribute("rol", usuario.getRol());
         session.setAttribute("esEscritor", usuario.getEsEscritor());
@@ -74,20 +72,27 @@ public class UsuarioController {
 
 
     //ver perfil propio
+
     @GetMapping("/usuarios/me")
-    ResponseEntity<Usuario> getPerfil(Principal principal) {
-        Usuario usuario = usuarioRepository.findByUsername(principal.getName());
+    ResponseEntity<?> getPerfil(HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autenticado");
+        }
+        Usuario usuario = usuarioRepository.findByUsername(username);
         return ResponseEntity.ok(usuario);
     }
+
     //ver perfil de otro usuario (admin)
     @GetMapping("/usuarios/{username}")
-    ResponseEntity<?> getUsuarioPorNombre(@PathVariable String username, Principal principal) {
-        if(principal != null) {
-            Usuario usuarioActual = usuarioRepository.findByUsername(principal.getName());
-            if (usuarioActual.getRol() != RolUsuario.ADMIN) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No tienes permisos para ver otros perfiles");
-            }
+    ResponseEntity<?> getUsuarioPorNombre(@PathVariable String username, HttpSession session) {
+        String loggedUsername = (String) session.getAttribute("username");
+        if (loggedUsername == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No estás autenticado");
+        }
+        Usuario usuarioActual = usuarioRepository.findByUsername(loggedUsername);
+        if (usuarioActual.getRol() != RolUsuario.ADMIN) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No tienes permisos para ver otros perfiles");
         }
         Usuario usuario = usuarioRepository.findByUsername(username);
         return usuario != null ? ResponseEntity.ok(usuario) : ResponseEntity.notFound().build();
@@ -96,9 +101,14 @@ public class UsuarioController {
 
     //modificar perfil (usuario o admin)
     @PutMapping("/usuarios/{username}")
-    ResponseEntity<?> update(@PathVariable String username, @RequestBody Usuario newUsuario, Principal principal) {
+    ResponseEntity<?> update(@PathVariable String username, @RequestBody Usuario newUsuario, HttpSession session) {
+        String loggedUsername = (String) session.getAttribute("username");
+        if (loggedUsername == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No estás autenticado");
+        }
+
         Usuario usuarioExistente = usuarioRepository.findByUsername(username);
-        Usuario usuarioActual = usuarioRepository.findByUsername(principal.getName());
+        Usuario usuarioActual = usuarioRepository.findByUsername(loggedUsername);
         if(usuarioExistente==null){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado");
         }
@@ -114,9 +124,14 @@ public class UsuarioController {
 
     //Eliminar un usuario (propio o como admin)
     @DeleteMapping("usuarios/{username}")
-    ResponseEntity<?> delete(@PathVariable String username, Principal principal) {
+    ResponseEntity<?> delete(@PathVariable String username, HttpSession session) {
+        String loggedUsername = (String) session.getAttribute("username");
+        if (loggedUsername == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No estás autenticado");
+        }
+
         Usuario usuarioAEliminar = usuarioRepository.findByUsername(username);
-        Usuario usuarioActual = usuarioRepository.findByUsername(principal.getName());
+        Usuario usuarioActual = usuarioRepository.findByUsername(loggedUsername);
 
         if(usuarioAEliminar==null){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado");
@@ -137,6 +152,4 @@ public class UsuarioController {
         usuarioRepository.delete(usuarioAEliminar);
         return ResponseEntity.ok("Usuario eliminado");
     }
-
-    
 }
