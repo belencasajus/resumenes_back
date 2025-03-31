@@ -50,8 +50,6 @@ public class ResumenController {
         if (username == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autenticado");
         }
-
-        Usuario usuario = usuarioRepository.findByUsername(username);
         
         resumen.setRevisado(false);
         resumenRepository.save(resumen);
