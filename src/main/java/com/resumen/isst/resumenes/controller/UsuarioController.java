@@ -44,13 +44,11 @@ public class UsuarioController {
 
         session.setAttribute("username", usuario.getUsername());
         session.setAttribute("rol", usuario.getRol());
-        session.setAttribute("esEscritor", usuario.getEsEscritor());
 
         Map<String, Object> response = new HashMap<>();
         response.put("username", usuario.getUsername());
         response.put("email", usuario.getEmail());
         response.put("rol", usuario.getRol());
-        response.put("esEscritor", usuario.getEsEscritor());
 
         return ResponseEntity.ok(response);
     }
@@ -82,24 +80,9 @@ public class UsuarioController {
         Usuario usuario = usuarioRepository.findByUsername(username);
         return ResponseEntity.ok(usuario);
     }
-
-    //ver perfil de otro usuario (admin)
-    @GetMapping("/usuarios/{username}")
-    ResponseEntity<?> getUsuarioPorNombre(@PathVariable String username, HttpSession session) {
-        String loggedUsername = (String) session.getAttribute("username");
-        if (loggedUsername == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No estás autenticado");
-        }
-        Usuario usuarioActual = usuarioRepository.findByUsername(loggedUsername);
-        if (usuarioActual.getRol() != RolUsuario.ADMIN) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No tienes permisos para ver otros perfiles");
-        }
-        Usuario usuario = usuarioRepository.findByUsername(username);
-        return usuario != null ? ResponseEntity.ok(usuario) : ResponseEntity.notFound().build();
-    }
         
 
-    //modificar perfil (usuario o admin)
+    //modificar perfil (usuario)
     @PutMapping("/usuarios/{username}")
     ResponseEntity<?> update(@PathVariable String username, @RequestBody Usuario newUsuario, HttpSession session) {
         String loggedUsername = (String) session.getAttribute("username");
@@ -113,7 +96,7 @@ public class UsuarioController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado");
         }
         
-        if(usuarioActual.getRol() != RolUsuario.ADMIN || !usuarioActual.getUsername().equals(usuarioExistente.getUsername())){
+        if(!usuarioActual.getUsername().equals(usuarioExistente.getUsername())){
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No tienes permisos para modificar este usuario");
         }
         usuarioExistente.setEmail(newUsuario.getEmail());
@@ -122,7 +105,7 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioExistente);
     }
 
-    //Eliminar un usuario (propio o como admin)
+    //Eliminar un usuario (propio)
     @DeleteMapping("usuarios/{username}")
     ResponseEntity<?> delete(@PathVariable String username, HttpSession session) {
         String loggedUsername = (String) session.getAttribute("username");
@@ -136,13 +119,10 @@ public class UsuarioController {
         if(usuarioAEliminar==null){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado");
         }
-        if(usuarioActual.getRol() != RolUsuario.ADMIN || !usuarioActual.getUsername().equals(username)) {
+        if(!usuarioActual.getUsername().equals(username)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } 
 
-        for(Resumen resumen: usuarioAEliminar.getResumenesEscritos()){
-            resumen.setEscritor(null);
-        }
         for(Resumen resumen: usuarioAEliminar.getFavoritos()){
             resumen.getUsuariosFavorito().remove(usuarioAEliminar);
         }

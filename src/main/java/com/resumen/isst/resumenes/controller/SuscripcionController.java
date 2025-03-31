@@ -24,12 +24,12 @@ public class SuscripcionController {
         this.usuarioRepository = usuarioRepository;
     }
     
-    //Obtener suscripcion (solo si es propia o admin)
+    //Obtener suscripcion (solo si es propia)
     @GetMapping("/suscripciones/{id}")
     ResponseEntity<?> getSuscripcion(@PathVariable Long id, Principal principal) {
         Usuario usuarioActual = usuarioRepository.findByUsername(principal.getName());
         return suscripcionRepository.findById(id).map(suscripcion -> {
-            if(!suscripcion.getUsuario().getUsername().equals(usuarioActual.getUsername()) && !usuarioActual.getRol().equals(RolUsuario.ADMIN)) {
+            if(!suscripcion.getUsuario().getUsername().equals(usuarioActual.getUsername())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No tienes acceso a esta suscripcion.");
             }
             return ResponseEntity.ok(suscripcion);
@@ -52,12 +52,12 @@ public class SuscripcionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(suscripcionRepository.save(suscripcion));
     }
 
-    //Actualizar suscripcion (solo si es propia o admin)
+    //Actualizar suscripcion (solo si es propia)
     @PatchMapping("/suscripciones/{id}")
     ResponseEntity<?> update(@PathVariable Long id, @RequestBody Suscripcion update, Principal principal) {
         return suscripcionRepository.findById(id).map(suscripcion -> {
             Usuario usuarioActual = usuarioRepository.findByUsername(principal.getName());
-            if(!suscripcion.getUsuario().getUsername().equals(principal.getName()) || !usuarioActual.getRol().equals(RolUsuario.ADMIN)) {
+            if(!suscripcion.getUsuario().getUsername().equals(principal.getName())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
 
@@ -76,12 +76,12 @@ public class SuscripcionController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    //Eliminar suscripcion (solo si es propia o admin)
+    //Eliminar suscripcion (solo si es propia)
     @DeleteMapping("/suscripciones/{id}")
     ResponseEntity<?> delete(@PathVariable Long id, Principal principal) {
         Usuario usuarioActual = usuarioRepository.findByUsername(principal.getName());
         return suscripcionRepository.findById(id).map(suscripcion -> {
-           if(!suscripcion.getUsuario().getUsername().equals(usuarioActual.getUsername()) || !usuarioActual.getRol().equals(RolUsuario.ADMIN)) {
+           if(!suscripcion.getUsuario().getUsername().equals(usuarioActual.getUsername())) {
                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
             Usuario usuario = suscripcion.getUsuario();
