@@ -1,6 +1,6 @@
 package com.resumen.isst.resumenes.model;
 
-import java.beans.Customizer;
+
 import java.util.Arrays;
 
 import org.springframework.context.annotation.Bean;
@@ -27,8 +27,6 @@ public class SecurityConfig {
     @Bean
 public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
-      .cors().and()
-      .csrf().disable()
       .authorizeHttpRequests(auth -> auth
           .requestMatchers(HttpMethod.POST, "/login").permitAll()
           .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

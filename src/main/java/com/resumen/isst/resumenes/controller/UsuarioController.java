@@ -45,6 +45,8 @@ public class UsuarioController {
 
         // Guarda información básica del usuario en la sesión (opcional)
         session.setAttribute("username", usuario.getUsername());
+        session.setAttribute("rol", usuario.getRol());
+        session.setAttribute("esEscritor", usuario.getEsEscritor());
 
         Map<String, Object> response = new HashMap<>();
         response.put("username", usuario.getUsername());
@@ -80,13 +82,12 @@ public class UsuarioController {
     //ver perfil de otro usuario (admin)
     @GetMapping("/usuarios/{username}")
     ResponseEntity<?> getUsuarioPorNombre(@PathVariable String username, Principal principal) {
-       if(principal != null) {
-        Usuario usuarioActual = usuarioRepository.findByUsername(principal.getName());
-           
-        if (usuarioActual.getRol() != RolUsuario.ADMIN) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No tienes permisos para ver otros perfiles");
-        }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No estás autenticado");
+        if(principal != null) {
+            Usuario usuarioActual = usuarioRepository.findByUsername(principal.getName());
+            if (usuarioActual.getRol() != RolUsuario.ADMIN) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No tienes permisos para ver otros perfiles");
+            }
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No estás autenticado");
         }
         Usuario usuario = usuarioRepository.findByUsername(username);
         return usuario != null ? ResponseEntity.ok(usuario) : ResponseEntity.notFound().build();
