@@ -44,7 +44,7 @@ public class ResumenController {
     //Crear un resumen nuevo
     @PostMapping("/resumenes")
     ResponseEntity<?> create(@RequestBody Resumen resumen, Principal principal) {
-
+        if (principal != null) {
         Usuario usuario = usuarioRepository.findByUsername(principal.getName());
 
         if(!usuario.getEsEscritor()) {
@@ -57,10 +57,11 @@ public class ResumenController {
             contrato.setUsuario(usuario);
             usuario.setContrato(contrato);
         }
-        resumen.setRevisado(false);
         usuario.addResumenEscrito(resumen);
-        resumenRepository.save(resumen);
         usuarioRepository.save(usuario);
+    }
+        resumen.setRevisado(false);
+        resumenRepository.save(resumen);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
