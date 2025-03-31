@@ -56,7 +56,6 @@ public class SuscripcionController {
     @PatchMapping("/suscripciones/{id}")
     ResponseEntity<?> update(@PathVariable Long id, @RequestBody Suscripcion update, Principal principal) {
         return suscripcionRepository.findById(id).map(suscripcion -> {
-            Usuario usuarioActual = usuarioRepository.findByUsername(principal.getName());
             if(!suscripcion.getUsuario().getUsername().equals(principal.getName())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
