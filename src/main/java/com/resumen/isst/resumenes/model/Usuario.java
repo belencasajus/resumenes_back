@@ -33,13 +33,8 @@ public class Usuario {
         
     private RolUsuario rol = RolUsuario.VISITANTE;
     
-    private boolean esEscritor;
 
     @OneToOne(mappedBy = "usuario", cascade= CascadeType.ALL, orphanRemoval=true) private Suscripcion suscripcion;
-
-    @OneToOne(mappedBy = "usuario", cascade= CascadeType.ALL, orphanRemoval=true) private Contrato contrato;
-
-    @OneToMany(mappedBy="escritor") private Set<Resumen> resumenesEscritos = new HashSet<>();
 
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true) private Set<Valoracion> valoraciones = new HashSet<>();
 
@@ -48,7 +43,7 @@ public class Usuario {
 
     public Usuario(String username, String password, @Email String email, String imagen, Set<Resumen> favoritos,
             Set<Resumen> resumenesLeidos, RolUsuario rol, boolean esEscritor, Suscripcion suscripcion,
-            Contrato contrato, Set<Resumen> resumenesEscritos, Set<Valoracion> valoraciones) {
+            Set<Resumen> resumenesEscritos, Set<Valoracion> valoraciones) {
         this.username = username;
         this.password = password;
         this.email = email;
@@ -56,10 +51,7 @@ public class Usuario {
         this.favoritos = favoritos;
         this.resumenesLeidos = resumenesLeidos;
         this.rol = rol;
-        this.esEscritor = esEscritor;
         this.suscripcion = suscripcion;
-        this.contrato = contrato;
-        this.resumenesEscritos = resumenesEscritos;
         this.valoraciones = valoraciones;
     }
 
@@ -118,14 +110,6 @@ public class Usuario {
         this.rol = rol;
     }
 
-    public boolean getEsEscritor() {
-        return esEscritor;
-    }
-
-    public void setEsEscritor(boolean esEscritor) {
-        this.esEscritor = esEscritor;
-    }
-
     public Set<Resumen> getResumenesLeidos() {
         return resumenesLeidos;
     }
@@ -144,26 +128,6 @@ public class Usuario {
         if(suscripcion != null) {              
             suscripcion.setUsuario(this);
         }
-    }
-
-    public Contrato getContrato() {
-        return contrato;
-    }
-
-    public void setContrato(Contrato contrato) {
-        this.contrato = contrato;
-        this.setEsEscritor(true);
-        if(contrato != null && contrato.getUsuario() != this) {
-            contrato.setUsuario(this);
-        }
-    }
-
-    public Set<Resumen> getResumenesEscritos() {
-        return resumenesEscritos;
-    }
-
-    public void setResumenesEscritos(Set<Resumen> resumenesEscritos) {
-        this.resumenesEscritos = resumenesEscritos;
     }
 
     public Set<Valoracion> getValoraciones() {
@@ -195,22 +159,7 @@ public class Usuario {
         resumen.getUsuariosLeido().remove(this);
     }
 
-    public void addResumenEscrito(Resumen resumen) {
-        if(esEscritor){
-            this.resumenesEscritos.add(resumen);
-            resumen.setEscritor(this);
-        } else {
-            throw new IllegalStateException("El usuario no es escritor");
-        }
-    }
 
-    public void removeResumenEscrito(Resumen resumen) {
-        if(esEscritor){
-            this.resumenesEscritos.remove(resumen);
-        } else {
-            throw new IllegalStateException("El usuario no es escritor");
-        }
-    }
 
     public void addValoracion(Valoracion valoracion) {
         this.valoraciones.add(valoracion);
@@ -255,7 +204,7 @@ public class Usuario {
     @Override
     public String toString() {
         return "Usuario [username=" + username + ", email=" + email +  ", rol=" + rol
-                + ", esEscritor=" + esEscritor + "]";
+                + "]";
     }
 
 }

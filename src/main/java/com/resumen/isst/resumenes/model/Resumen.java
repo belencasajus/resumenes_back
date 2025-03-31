@@ -26,10 +26,6 @@ public class Resumen {
 
     private String audio;
 
-    private boolean revisado=false;
-
-    @ManyToOne private Usuario escritor;
-
     @ManyToMany(mappedBy = "favoritos") private Set<Usuario> usuariosFavorito = new HashSet<>();
 
     @ManyToMany(mappedBy = "resumenesLeidos") private Set<Usuario> usuariosLeido = new HashSet<>();
@@ -52,8 +48,6 @@ public class Resumen {
         this.valoracionMedia = valoracionMedia;
         this.texto = texto;
         this.audio = audio;
-        this.revisado = revisado;
-        this.escritor = escritor;
         this.usuariosFavorito = usuariosFavorito;
         this.usuariosLeido = usuariosLeido;
         this.valoraciones = valoraciones;
@@ -148,26 +142,6 @@ public class Resumen {
         this.audio = audio;
     }
 
-
-    public boolean isRevisado() {
-        return revisado;
-    }
-
-
-    public void setRevisado(boolean revisado) {
-        this.revisado = revisado;
-    }
-
-
-    public Usuario getEscritor() {
-        return escritor;
-    }
-
-
-    public void setEscritor(Usuario usuario) {
-        this.escritor = usuario;
-    }
-
     public Set<Usuario> getUsuariosFavorito() {
         return usuariosFavorito;
     }
@@ -228,7 +202,7 @@ public class Resumen {
     public String toString() {
         return "Resumen [id=" + id + ", titulo=" + titulo + ", autor=" + autor  + ", premium="
                 + premium + ", genero=" + genero + ", valoracionMedia=" + valoracionMedia 
-                + ", revisado=" + revisado + ", escritor=" + (escritor != null? escritor.getUsername() : "null") + "]";
+                + "]";
     }
 
 
