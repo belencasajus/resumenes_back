@@ -57,7 +57,7 @@ public class UsuarioController {
 
     //Crear un nuevo usuario (registro)
     @PostMapping("/usuarios")
-    ResponseEntity<?> create(@RequestBody Usuario usuario) {
+    ResponseEntity<?> create(@RequestBody Usuario usuario, HttpSession session) {
         if(usuario.getUsername() == null || usuario.getPassword() == null || usuario.getEmail() == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Faltan campos obligatorios");
         }
@@ -67,6 +67,16 @@ public class UsuarioController {
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
         usuario.setRol(RolUsuario.VISITANTE);
         usuarioRepository.save(usuario);
+
+        session.setAttribute("username", usuario.getUsername());
+        session.setAttribute("rol", usuario.getRol());
+    
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("username", usuario.getUsername());
+        response.put("email", usuario.getEmail());
+        response.put("rol", usuario.getRol());
+        
         return new ResponseEntity<>(usuario, HttpStatus.CREATED);
     }
 
