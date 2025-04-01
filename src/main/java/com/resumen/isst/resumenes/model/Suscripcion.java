@@ -74,6 +74,7 @@ public class Suscripcion {
         this.usuario = usuario;
         if(usuario != null && usuario.getSuscripcion() != this){
             usuario.setSuscripcion(this);
+            usuario.setRol(RolUsuario.LECTOR);
         }
     }
 

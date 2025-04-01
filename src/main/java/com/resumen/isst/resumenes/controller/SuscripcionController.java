@@ -6,6 +6,8 @@ import com.resumen.isst.resumenes.model.Usuario;
 import com.resumen.isst.resumenes.repository.SuscripcionRepository;
 import com.resumen.isst.resumenes.repository.UsuarioRepository;
 
+import jakarta.servlet.http.HttpSession;
+
 import java.security.Principal;
 import java.time.LocalDate;
 
@@ -38,8 +40,12 @@ public class SuscripcionController {
 
     //Crear una nueva suscripcion
     @PostMapping("/suscripciones")
-    ResponseEntity<?> create(@RequestBody Suscripcion suscripcion, Principal principal) {
-        Usuario usuario = usuarioRepository.findByUsername(principal.getName());
+    ResponseEntity<?> create(@RequestBody Suscripcion suscripcion, HttpSession session) {
+        String loggedUsername = (String) session.getAttribute("username");
+        if (loggedUsername == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No estás autenticado");
+        }
+        Usuario usuario = usuarioRepository.findByUsername(loggedUsername);
         if(usuario.getSuscripcion() != null) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Ya tiene una suscripcion activa. Actualice su suscripcion si lo desea");
         }
