@@ -74,7 +74,7 @@ public class ResumenController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         if(usuarioActual.getRol()== RolUsuario.VISITANTE && resumen.isPremium()) {
-             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No se puede ver resúmenes premium como visitante");
+             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No se puede ver resúmenes premium como visitante");
         }
         return ResponseEntity.ok(resumen);
     }
