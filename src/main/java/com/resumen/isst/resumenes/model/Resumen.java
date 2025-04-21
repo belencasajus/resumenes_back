@@ -2,6 +2,8 @@ package com.resumen.isst.resumenes.model;
 
 import java.util.*;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.*;
@@ -24,15 +26,20 @@ public class Resumen {
 
     @PositiveOrZero @DecimalMax("5.0") private double valoracionMedia;
 
-    @Lob private String texto;
+    @Column(columnDefinition = "TEXT")
+    private String texto;
 
     private String audio;
 
     private boolean revisado=false;
 
-    @ManyToMany(mappedBy = "favoritos") private Set<Usuario> usuariosFavorito = new HashSet<>();
+    @JsonIgnore
+    @ManyToMany(mappedBy = "favoritos") private Set<Usuario> 
+    usuariosFavorito = new HashSet<>();
 
-    @ManyToMany(mappedBy = "resumenesLeidos") private Set<Usuario> usuariosLeido = new HashSet<>();
+    @ManyToMany(mappedBy = "resumenesLeidos") 
+    @JsonIgnore
+    private Set<Usuario> usuariosLeido = new HashSet<>();
 
     @OneToMany(mappedBy = "resumen", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("resumen-valoraciones")

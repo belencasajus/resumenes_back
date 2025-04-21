@@ -7,12 +7,14 @@ import com.resumen.isst.resumenes.repository.ValoracionRepository;
 
 import jakarta.servlet.http.HttpSession;
 
+
 import com.resumen.isst.resumenes.repository.UsuarioRepository;
 import com.resumen.isst.resumenes.repository.ResumenRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -56,6 +58,7 @@ public class ValoracionController {
      * "comentario": "Esto es un resumen muy interesante"
      * }
      */
+    @Transactional
     @PostMapping("/valoraciones/{resumenId}")
     public ResponseEntity<?> create(@PathVariable Long resumenId, @RequestBody Valoracion nuevaValoracion, HttpSession session) {
         String username = (String) session.getAttribute("username");
@@ -66,6 +69,9 @@ public class ValoracionController {
         Usuario usuario = usuarioRepository.findByUsername(username);
 
         return resumenRepository.findById(resumenId).map(resumen -> {
+            if (!usuario.getResumenesLeidos().contains(resumen)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Debes leer el resumen antes de poder valorarlo.");
+            }
             //Verificar si ya existe una valoracion del usuario
             Optional<Valoracion> existente = valoracionRepository.findByUsuarioAndResumen(usuario, resumen);
             if (existente.isPresent()) {

@@ -3,6 +3,7 @@ package com.resumen.isst.resumenes.controller;
 import com.resumen.isst.resumenes.model.Resumen;
 import com.resumen.isst.resumenes.model.RolUsuario;
 import com.resumen.isst.resumenes.model.Usuario;
+import com.resumen.isst.resumenes.repository.ResumenRepository;
 import com.resumen.isst.resumenes.repository.UsuarioRepository;
 
 import jakarta.servlet.http.HttpSession;
@@ -10,12 +11,14 @@ import jakarta.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -26,9 +29,11 @@ import org.springframework.web.bind.annotation.*;
 public class UsuarioController {
 
     private final UsuarioRepository usuarioRepository;
+    private final ResumenRepository resumenRepository;
     private PasswordEncoder passwordEncoder;
 
-    public UsuarioController(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+    public UsuarioController(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, ResumenRepository resumenRepository) {
+        this.resumenRepository = resumenRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -94,7 +99,7 @@ public class UsuarioController {
 
 
     //ver perfil propio
-
+    @Transactional
     @GetMapping("/usuarios/me")
     ResponseEntity<?> getPerfil(HttpSession session) {
         String username = (String) session.getAttribute("username");
@@ -157,4 +162,29 @@ public class UsuarioController {
         usuarioRepository.delete(usuarioAEliminar);
         return ResponseEntity.ok("Usuario eliminado");
     }
+
+    @PostMapping("/usuarios/leidos/{resumenId}")
+    public ResponseEntity<?> marcarResumenComoLeido(@PathVariable Long resumenId, HttpSession session) {
+    String username = (String) session.getAttribute("username");
+    if (username == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario no autenticado");
+    }
+
+    Usuario usuario = usuarioRepository.findByUsername(username);
+    Optional<Resumen> resumenOpt = resumenRepository.findById(resumenId);
+
+    if (usuario == null || resumenOpt.isEmpty()) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario o resumen no encontrado");
+    }
+
+    Resumen resumen = resumenOpt.get();
+    if (!usuario.getResumenesLeidos().contains(resumen)) {
+       usuario.getResumenesLeidos().add(resumen);
+        resumen.getUsuariosLeido().add(usuario);
+        usuarioRepository.save(usuario);
+    }
+    return ResponseEntity.ok("Resumen marcado como leído");
+
+    }
+
 }

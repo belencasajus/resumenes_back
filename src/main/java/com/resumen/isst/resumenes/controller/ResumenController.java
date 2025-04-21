@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -17,7 +18,6 @@ import com.resumen.isst.resumenes.model.Usuario;
 import com.resumen.isst.resumenes.repository.*;
 
 import jakarta.servlet.http.HttpSession;
-import jakarta.transaction.Transactional;
 
 
 
@@ -57,6 +57,7 @@ public class ResumenController {
     }
 
     //Obtener un resumen 
+    @Transactional
     @GetMapping("/resumenes/{id}")
     ResponseEntity<?> getResumen(@PathVariable Long id, HttpSession session) {
         String username = (String) session.getAttribute("username");

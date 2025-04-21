@@ -3,6 +3,7 @@ package com.resumen.isst.resumenes.model;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMax;
@@ -79,7 +80,6 @@ public class Valoracion {
     public void setUsuario (Usuario usuario) {
         if(usuario!= null) {
             this.usuario = usuario;
-            usuario.getValoraciones().add(this);
         }
     }
 
