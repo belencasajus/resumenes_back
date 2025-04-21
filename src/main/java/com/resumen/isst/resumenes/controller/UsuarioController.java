@@ -186,5 +186,51 @@ public class UsuarioController {
     return ResponseEntity.ok("Resumen marcado como leído");
 
     }
+    @PostMapping("/usuarios/favoritos/{resumenId}")
+    public ResponseEntity<?> addFavorito(@PathVariable Long resumenId, HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario no autenticado");
+        }
+
+        Usuario usuario = usuarioRepository.findByUsername(username);
+        Optional<Resumen> resumenOpt = resumenRepository.findById(resumenId);
+
+        if (usuario == null || resumenOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario o resumen no encontrado");
+        }
+
+        Resumen resumen = resumenOpt.get();
+
+        if (!usuario.getFavoritos().contains(resumen)) {
+            usuario.addFavorito(resumen);
+            usuarioRepository.save(usuario);
+        }
+
+        return ResponseEntity.ok("Resumen añadido a favoritos");
+    }
+    @DeleteMapping("/usuarios/favoritos/{resumenId}")
+    public ResponseEntity<?> removeFavorito(@PathVariable Long resumenId, HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario no autenticado");
+        }
+
+        Usuario usuario = usuarioRepository.findByUsername(username);
+        Optional<Resumen> resumenOpt = resumenRepository.findById(resumenId);
+
+        if (usuario == null || resumenOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario o resumen no encontrado");
+        }
+
+        Resumen resumen = resumenOpt.get();
+
+        if (usuario.getFavoritos().contains(resumen)) {
+            usuario.removeFavorito(resumen);
+            usuarioRepository.save(usuario);
+        }
+
+        return ResponseEntity.ok("Resumen eliminado de favoritos");
+    }
 
 }
