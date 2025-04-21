@@ -2,6 +2,8 @@ package com.resumen.isst.resumenes.model;
 
 import java.util.*;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -32,7 +34,9 @@ public class Resumen {
 
     @ManyToMany(mappedBy = "resumenesLeidos") private Set<Usuario> usuariosLeido = new HashSet<>();
 
-    @OneToMany(mappedBy = "resumen", cascade = CascadeType.ALL, orphanRemoval = true) private Set<Valoracion> valoraciones= new HashSet<>();
+    @OneToMany(mappedBy = "resumen", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("resumen-valoraciones")
+    private Set<Valoracion> valoraciones= new HashSet<>();
 
     public Resumen() {
     }

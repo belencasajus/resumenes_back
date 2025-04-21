@@ -59,18 +59,17 @@ public class ResumenController {
     //Obtener un resumen 
     @GetMapping("/resumenes/{id}")
     ResponseEntity<?> getResumen(@PathVariable Long id, HttpSession session) {
-
         String username = (String) session.getAttribute("username");
         if (username == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Usuario no autenticado");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario no autenticado");
         }
 
         Usuario usuarioActual = usuarioRepository.findByUsername(username);
         if (usuarioActual == null) {
-            return  ResponseEntity.status(HttpStatus.FORBIDDEN).body("Usuario no autenticado");
+            return  ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario no encontrado");
         }
         Resumen resumen = resumenRepository.findById(id).orElse(null);
-        if (resumen == null){
+        if (resumen == null){ 
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         if(usuarioActual.getRol()== RolUsuario.VISITANTE && resumen.isPremium()) {

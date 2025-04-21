@@ -8,10 +8,13 @@ import com.resumen.isst.resumenes.repository.UsuarioRepository;
 import jakarta.servlet.http.HttpSession;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,7 +47,12 @@ public class UsuarioController {
 
         session.setAttribute("username", usuario.getUsername());
         session.setAttribute("rol", usuario.getRol());
-    
+        
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(usuario.getUsername(), null, List.of());
+
+        SecurityContextHolder.getContext().setAuthentication(authToken);
+
+        session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
 
         Map<String, Object> response = new HashMap<>();
         response.put("username", usuario.getUsername());
@@ -70,7 +78,11 @@ public class UsuarioController {
 
         session.setAttribute("username", usuario.getUsername());
         session.setAttribute("rol", usuario.getRol());
-    
+
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(usuario.getUsername(), null, List.of());
+        SecurityContextHolder.getContext().setAuthentication(authToken);
+
+        session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
 
         Map<String, Object> response = new HashMap<>();
         response.put("username", usuario.getUsername());

@@ -3,6 +3,7 @@ package com.resumen.isst.resumenes.model;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -36,7 +37,9 @@ public class Usuario {
     @OneToOne(mappedBy = "usuario", cascade= CascadeType.ALL, orphanRemoval=true) private Suscripcion suscripcion;
 
 
-    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true) private Set<Valoracion> valoraciones = new HashSet<>();
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true) 
+    @JsonManagedReference("usuario-valoraciones")
+    private Set<Valoracion> valoraciones = new HashSet<>();
 
     public Usuario() {
     }

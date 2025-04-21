@@ -1,6 +1,9 @@
 package com.resumen.isst.resumenes.model;
 
 import java.time.LocalDateTime;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -18,10 +21,12 @@ public class Valoracion {
 
     @ManyToOne
     @JoinColumn(name = "username")
+    @JsonBackReference("usuario-valoraciones")
     private Usuario usuario;
 
     @ManyToOne
     @JoinColumn(name = "resumen_id")
+    @JsonBackReference("resumen-valoraciones")
     private Resumen resumen;
 
     public Valoracion() {
