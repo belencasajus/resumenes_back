@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -68,6 +69,13 @@ public class UsuarioController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpSession session) {
+        session.invalidate();
+        SecurityContextHolder.clearContext();
+        return ResponseEntity.ok("Sesión cerrada");
+    }
+
     //Crear un nuevo usuario (registro)
     @PostMapping("/usuarios")
     ResponseEntity<?> create(@RequestBody Usuario usuario, HttpSession session) {
@@ -107,6 +115,7 @@ public class UsuarioController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autenticado");
         }
         Usuario usuario = usuarioRepository.findByUsername(username);
+        usuario.getValoraciones().size();
         return ResponseEntity.ok(usuario);
     }
         
@@ -232,5 +241,53 @@ public class UsuarioController {
 
         return ResponseEntity.ok("Resumen eliminado de favoritos");
     }
+
+    @GetMapping("/usuarios/favoritos")
+    public ResponseEntity<?> getFavoritos(HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario no autenticado");
+        }
+
+        Usuario usuario = usuarioRepository.findByUsername(username);
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado");
+        }
+
+        Set <Resumen> favoritos = usuario.getFavoritos();
+        return ResponseEntity.ok(favoritos);
+    }
+
+    @GetMapping("/usuarios/leidos")
+    public ResponseEntity<?> getResumenesLeidos(HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario no autenticado");
+        }
+
+        Usuario usuario = usuarioRepository.findByUsername(username);
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado");
+        }
+
+        Set <Resumen> leidos = usuario.getResumenesLeidos();
+        return ResponseEntity.ok(leidos);
+    }
+
+    @PutMapping("/usuarios/imagen")
+public ResponseEntity<?> actualizarImagen(@RequestBody Map<String, String> body, HttpSession session) {
+    String username = (String) session.getAttribute("username");
+    if (username == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autenticado");
+    }
+
+    Usuario usuario = usuarioRepository.findByUsername(username);
+    String nuevaImagen = body.get("imagen");
+
+    usuario.setImagen(nuevaImagen);
+    usuarioRepository.save(usuario);
+
+    return ResponseEntity.ok("Imagen actualizada");
+}
 
 }

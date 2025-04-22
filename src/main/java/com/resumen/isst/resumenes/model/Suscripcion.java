@@ -2,7 +2,7 @@ package com.resumen.isst.resumenes.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Positive;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDate;
 
 
@@ -14,7 +14,8 @@ public class Suscripcion {
     private LocalDate fechaFin;
 
     @OneToOne
-    @JoinColumn(name = "username")    
+    @JoinColumn(name = "username")   
+    @JsonIgnore 
     private Usuario usuario;
 
 

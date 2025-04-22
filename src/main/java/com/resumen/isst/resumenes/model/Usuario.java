@@ -3,7 +3,6 @@ package com.resumen.isst.resumenes.model;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.*;
@@ -18,7 +17,8 @@ public class Usuario {
 
     @Email private String email;
 
-    private String imagen;       //Guardamos la imagen como una URL
+    @Lob
+    private String imagen;      
     
     @ManyToMany @JoinTable(
         name = "favoritos",
@@ -31,7 +31,8 @@ public class Usuario {
         name = "resumenes_leidos",
         joinColumns = @JoinColumn(name = "usuario_id"),
         inverseJoinColumns = @JoinColumn(name = "resumen_id")
-        ) 
+        )
+         
         private Set<Resumen> resumenesLeidos = new HashSet<>();
         
     private RolUsuario rol = RolUsuario.VISITANTE;
@@ -41,7 +42,6 @@ public class Usuario {
 
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true) 
     @JsonManagedReference("usuario-valoraciones")
-    @JsonIgnore
     private Set<Valoracion> valoraciones = new HashSet<>();
 
     public Usuario() {
