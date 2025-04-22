@@ -22,7 +22,9 @@ public class Resumen {
 
     private boolean premium;
 
-    private String genero;
+    @ManyToOne
+    @JoinColumn(name = "categoria_id")
+    private Categoria categoria;
 
     @PositiveOrZero @DecimalMax("5.0") private double valoracionMedia;
 
@@ -48,7 +50,7 @@ public class Resumen {
     public Resumen() {
     }
 
-    public Resumen(Long id, String titulo, String autor, String imagen, boolean premium, String genero,
+    public Resumen(Long id, String titulo, String autor, String imagen, boolean premium, Categoria categoria,
             @PositiveOrZero @DecimalMax("5.0") double valoracionMedia, String texto, String audio, boolean revisado,
             Set<Usuario> usuariosFavorito, Set<Usuario> usuariosLeido,
             Set<Valoracion> valoraciones) {
@@ -57,7 +59,7 @@ public class Resumen {
         this.autor = autor;
         this.imagen = imagen;
         this.premium = premium;
-        this.genero = genero;
+        this.categoria = categoria;
         this.valoracionMedia = valoracionMedia;
         this.texto = texto;
         this.audio = audio;
@@ -116,16 +118,13 @@ public class Resumen {
         this.premium = premium;
     }
 
-
-    public String getGenero() {
-        return genero;
+    public Categoria getCategoria() {
+        return categoria;
     }
 
-
-    public void setGenero(String genero) {
-        this.genero = genero;
+    public void setCategoria(Categoria categoria) {
+        this.categoria = categoria;
     }
-
 
     public double getValoracionMedia() {
         return valoracionMedia;
@@ -225,7 +224,7 @@ public class Resumen {
     @Override
     public String toString() {
         return "Resumen [id=" + id + ", titulo=" + titulo + ", autor=" + autor  + ", premium="
-                + premium + ", genero=" + genero + ", valoracionMedia=" + valoracionMedia 
+                + premium + ", categoria=" + categoria + ", valoracionMedia=" + valoracionMedia 
                 + ", revisado=" + revisado + "]";
     }
 
@@ -263,6 +262,8 @@ public class Resumen {
         usuariosLeido.remove(usuario);
         usuario.getResumenesLeidos().remove(this);
     }
+
+
 
 
 }

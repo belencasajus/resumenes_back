@@ -1,8 +1,6 @@
 package com.resumen.isst.resumenes.controller;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,9 +35,14 @@ public class ResumenController {
 
     //Obtener los resumenes incluidos en el catálogo (resúmenes revisados)
     @GetMapping("/resumenes")
-    List<Resumen> getResumenes() {
-        //return (List<Resumen>) resumenRepository.findByRevisado(true); //cambiar a true
-        return (List<Resumen>) resumenRepository.findAll();
+    public ResponseEntity<List<Resumen>> getResumenes(@RequestParam(required= false) Long categoriaId) {
+        List<Resumen> resumenes;
+        if( categoriaId != null) {
+            resumenes = resumenRepository.findByCategoria_Id(categoriaId);
+        } else{
+            resumenes = (List<Resumen>) resumenRepository.findAll();
+        }
+        return ResponseEntity.ok(resumenes);
     } 
 
     //Crear un resumen nuevo
@@ -123,7 +126,7 @@ public class ResumenController {
             resumen.setAutor(newResumen.getAutor());
             resumen.setImagen(newResumen.getImagen());
             resumen.setPremium(newResumen.isPremium());
-            resumen.setGenero(newResumen.getGenero());
+            resumen.setCategoria(newResumen.getCategoria());
             resumen.setTexto(newResumen.getTexto());
             resumen.setAudio(newResumen.getAudio());
             resumen.setRevisado(false);  //Se pone en false para que un admin lo revise
@@ -157,8 +160,8 @@ public class ResumenController {
             if (newResumen.getImagen() != null) {
                 resumen.setImagen(newResumen.getImagen());
             }
-            if (newResumen.getGenero() != null) {
-                resumen.setGenero(newResumen.getGenero());
+            if (newResumen.getCategoria() != null) {
+                resumen.setCategoria(newResumen.getCategoria());
             }
             if (newResumen.getTexto() != null) {
                 resumen.setTexto(newResumen.getTexto());
