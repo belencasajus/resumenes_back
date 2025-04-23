@@ -24,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
@@ -91,7 +92,7 @@ public class UsuarioController {
         if(usuario.getUsername() == null || usuario.getPassword() == null || usuario.getEmail() == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Faltan campos obligatorios");
         }
-        if(usuarioRepository.existsById(usuario.getUsername())) {
+        if(usuarioRepository.existsByUsername(usuario.getUsername())) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("El nombre de usuario ya está en uso");
         }
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
@@ -322,7 +323,7 @@ public class UsuarioController {
     }
 
     @PutMapping(value = "/usuarios/perfil", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-public ResponseEntity<?> actualizarPerfil(
+    public ResponseEntity<?> actualizarPerfil(
         @RequestPart("username") String nuevoUsername,
         @RequestPart("email") String nuevoEmail,
         @RequestPart(value = "imagen", required = false) MultipartFile nuevaImagen,
@@ -338,6 +339,10 @@ public ResponseEntity<?> actualizarPerfil(
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado");
             }
         
+            if(!nuevoUsername.equals(actualUsername) && usuarioRepository.existsByUsername(nuevoUsername)) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("El nombre de usuario ya está en uso");
+            }
+
             // Actualizar datos
             usuario.setUsername(nuevoUsername);
             usuario.setEmail(nuevoEmail);
@@ -353,12 +358,18 @@ public ResponseEntity<?> actualizarPerfil(
                 usuario.setImagen("/user_imgs/" + nombreArchivo);
             }
         
-            usuarioRepository.save(usuario);
+            usuarioRepository.saveAndFlush(usuario);
         
             // Actualizar sesión
+            Authentication authOld = SecurityContextHolder.getContext().getAuthentication();
+            Authentication authNew = new UsernamePasswordAuthenticationToken(
+                    nuevoUsername, authOld.getCredentials(), authOld.getAuthorities());
+        
+            SecurityContextHolder.getContext().setAuthentication(authNew);
+            session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
             session.setAttribute("username", nuevoUsername);
         
             return ResponseEntity.ok(usuario);
-}
+    }
 
 }
