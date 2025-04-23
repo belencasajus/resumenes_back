@@ -63,7 +63,7 @@ public class SuscripcionController {
         usuario.setRol(RolUsuario.LECTOR); 
         
         usuarioRepository.save(usuario);    // No hace falta poner "suscripcionRepository.save(suscripcion)" ya que al poner cascade = CascadeType.ALL en el usuario, ya que guarda usuario y tambien suscripcion
-        return ResponseEntity.status(HttpStatus.CREATED).body(suscripcionRepository.save(suscripcion));
+        return ResponseEntity.status(HttpStatus.CREATED).body(usuario.getSuscripcion());
     }
 
     //Actualizar suscripcion (solo si es propia)
