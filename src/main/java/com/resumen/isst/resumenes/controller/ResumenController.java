@@ -1,6 +1,8 @@
 package com.resumen.isst.resumenes.controller;
 
+import java.io.IOException;
 import java.util.*;
+import java.nio.file.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,7 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.resumen.isst.resumenes.model.Resumen;
 import com.resumen.isst.resumenes.model.RolUsuario;
@@ -46,18 +49,40 @@ public class ResumenController {
     } 
 
     //Crear un resumen nuevo
-    @PostMapping("/resumenes")
-    ResponseEntity<?> create(@RequestBody Resumen resumen, HttpSession session) {
+    @PostMapping(value = "/resumenes", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> create(
+        @RequestPart("data") Resumen resumen,
+        @RequestPart(value = "cover", required = false) MultipartFile cover,
+        @RequestPart(value = "audio", required = false) MultipartFile audio,
+        HttpSession session) throws IOException {
 
-        String username = (String) session.getAttribute("username");
-        if (username == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autenticado");
-        }
-        
-        resumen.setRevisado(false);
-        resumenRepository.save(resumen);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+    String username = (String) session.getAttribute("username");
+    if (username == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autenticado");
+
+    Path root = Paths.get("").toAbsolutePath()          
+                  .getParent()                      
+                  .resolve("public");              
+
+    Files.createDirectories(root.resolve("cover"));
+    Files.createDirectories(root.resolve("audio"));
+
+    if (cover != null && !cover.isEmpty()) {
+        String coverName = UUID.randomUUID() + "-" + cover.getOriginalFilename();
+        Files.copy(cover.getInputStream(), root.resolve("cover").resolve(coverName));
+        resumen.setImagen("/cover/" + coverName);
     }
+
+    if (audio != null && !audio.isEmpty()) {
+        String audioName = UUID.randomUUID() + "-" + audio.getOriginalFilename();
+        Files.copy(audio.getInputStream(), root.resolve("audio").resolve(audioName));
+        resumen.setAudio("/audio/" + audioName);
+    }
+
+    resumen.setRevisado(false);
+    resumenRepository.save(resumen);
+
+    return ResponseEntity.status(HttpStatus.CREATED).body(resumen);
+}
 
     //Obtener un resumen 
     @Transactional
