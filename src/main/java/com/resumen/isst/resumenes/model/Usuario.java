@@ -17,7 +17,6 @@ public class Usuario {
 
     @Email private String email;
 
-    @Lob
     private String imagen;      
     
     @ManyToMany @JoinTable(

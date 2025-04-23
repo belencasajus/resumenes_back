@@ -1,7 +1,6 @@
 package com.resumen.isst.resumenes.model;
 
 
-import java.nio.file.Paths;
 import java.util.Arrays;
 
 import org.springframework.context.annotation.Bean;
@@ -75,6 +74,9 @@ public class SecurityConfig {
 
         registry.addResourceHandler("/audio/**")
                 .addResourceLocations("file:" + rootPath.resolve("audio").toString() + "/");
+                
+        registry.addResourceHandler("/user_imgs/**")
+                .addResourceLocations("file:" + rootPath.resolve("user_imgs").toString() + "/");
     }
 }
 }

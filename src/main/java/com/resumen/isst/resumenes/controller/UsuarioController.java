@@ -10,11 +10,16 @@ import com.resumen.isst.resumenes.repository.UsuarioRepository;
 
 import jakarta.servlet.http.HttpSession;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.nio.file.*;
+import java.util.UUID;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -316,6 +321,44 @@ public class UsuarioController {
         return ResponseEntity.ok("Suscripción cancelada correctamente");
     }
 
+    @PutMapping(value = "/usuarios/perfil", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+public ResponseEntity<?> actualizarPerfil(
+        @RequestPart("username") String nuevoUsername,
+        @RequestPart("email") String nuevoEmail,
+        @RequestPart(value = "imagen", required = false) MultipartFile nuevaImagen,
+        HttpSession session) throws IOException {
 
+            String actualUsername = (String) session.getAttribute("username");
+            if (actualUsername == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autenticado");
+            }
+        
+            Usuario usuario = usuarioRepository.findByUsername(actualUsername);
+            if (usuario == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado");
+            }
+        
+            // Actualizar datos
+            usuario.setUsername(nuevoUsername);
+            usuario.setEmail(nuevoEmail);
+        
+            // Guardar imagen si existe
+            if (nuevaImagen != null && !nuevaImagen.isEmpty()) {
+                Path root = Paths.get("").toAbsolutePath().getParent().resolve("public/user_imgs");
+                Files.createDirectories(root);
+        
+                String nombreArchivo = UUID.randomUUID() + "-" + nuevaImagen.getOriginalFilename();
+                Files.copy(nuevaImagen.getInputStream(), root.resolve(nombreArchivo), StandardCopyOption.REPLACE_EXISTING);
+        
+                usuario.setImagen("/user_imgs/" + nombreArchivo);
+            }
+        
+            usuarioRepository.save(usuario);
+        
+            // Actualizar sesión
+            session.setAttribute("username", nuevoUsername);
+        
+            return ResponseEntity.ok(usuario);
+}
 
 }
