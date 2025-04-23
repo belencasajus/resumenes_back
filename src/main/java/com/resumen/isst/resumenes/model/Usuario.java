@@ -106,13 +106,6 @@ public class Usuario {
     }
 
     public void setRol(RolUsuario rol) {
-        if (rol.equals(RolUsuario.LECTOR)) {                            //Dice el chat que esta parte va en el servicio
-            if(this.suscripcion == null){
-                this.suscripcion = new Suscripcion();
-                this.suscripcion.setUsuario(this);
-            }
-        }
-
         this.rol = rol;
     }
 

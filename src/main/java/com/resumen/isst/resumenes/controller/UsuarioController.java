@@ -2,8 +2,10 @@ package com.resumen.isst.resumenes.controller;
 
 import com.resumen.isst.resumenes.model.Resumen;
 import com.resumen.isst.resumenes.model.RolUsuario;
+import com.resumen.isst.resumenes.model.Suscripcion;
 import com.resumen.isst.resumenes.model.Usuario;
 import com.resumen.isst.resumenes.repository.ResumenRepository;
+import com.resumen.isst.resumenes.repository.SuscripcionRepository;
 import com.resumen.isst.resumenes.repository.UsuarioRepository;
 
 import jakarta.servlet.http.HttpSession;
@@ -31,9 +33,11 @@ public class UsuarioController {
 
     private final UsuarioRepository usuarioRepository;
     private final ResumenRepository resumenRepository;
+    private final SuscripcionRepository suscripcionRepository;
     private PasswordEncoder passwordEncoder;
 
-    public UsuarioController(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, ResumenRepository resumenRepository) {
+    public UsuarioController(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, ResumenRepository resumenRepository, SuscripcionRepository suscripcionRepository) {
+        this.suscripcionRepository = suscripcionRepository;
         this.resumenRepository = resumenRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
@@ -275,19 +279,43 @@ public class UsuarioController {
     }
 
     @PutMapping("/usuarios/imagen")
-public ResponseEntity<?> actualizarImagen(@RequestBody Map<String, String> body, HttpSession session) {
-    String username = (String) session.getAttribute("username");
-    if (username == null) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autenticado");
+    public ResponseEntity<?> actualizarImagen(@RequestBody Map<String, String> body, HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autenticado");
+        }
+
+        Usuario usuario = usuarioRepository.findByUsername(username);
+        String nuevaImagen = body.get("imagen");
+
+        usuario.setImagen(nuevaImagen);
+        usuarioRepository.save(usuario);
+
+        return ResponseEntity.ok("Imagen actualizada");
     }
 
-    Usuario usuario = usuarioRepository.findByUsername(username);
-    String nuevaImagen = body.get("imagen");
+    @DeleteMapping("/usuarios/suscripcion")
+    @Transactional
+    public ResponseEntity<?> deleteSuscripcion(HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No estás autenticado");
+        }
 
-    usuario.setImagen(nuevaImagen);
-    usuarioRepository.save(usuario);
+        Usuario usuario = usuarioRepository.findByUsername(username);
+        if(usuario==null || usuario.getSuscripcion() == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No tienes una suscripción activa");
+        }
+        Suscripcion suscripcion = usuario.getSuscripcion();
 
-    return ResponseEntity.ok("Imagen actualizada");
-}
+        usuario.setSuscripcion(null);
+        usuario.setRol(RolUsuario.VISITANTE);
+
+        suscripcionRepository.delete(suscripcion); 
+        usuarioRepository.save(usuario);
+        return ResponseEntity.ok("Suscripción cancelada correctamente");
+    }
+
+
 
 }

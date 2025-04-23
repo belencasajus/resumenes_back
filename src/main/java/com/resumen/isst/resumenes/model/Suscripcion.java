@@ -73,10 +73,6 @@ public class Suscripcion {
 
     public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
-        if(usuario != null && usuario.getSuscripcion() != this){
-            usuario.setSuscripcion(this);
-            usuario.setRol(RolUsuario.LECTOR);
-        }
     }
 
     @Override
