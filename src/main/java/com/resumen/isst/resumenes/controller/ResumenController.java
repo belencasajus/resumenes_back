@@ -79,6 +79,7 @@ public class ResumenController {
     }
 
     resumen.setRevisado(false);
+    resumen.setEscritor(usuarioRepository.findByUsername(username));
     resumenRepository.save(resumen);
 
     return ResponseEntity.status(HttpStatus.CREATED).body(resumen);

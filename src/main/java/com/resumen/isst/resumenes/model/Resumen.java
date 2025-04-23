@@ -2,7 +2,7 @@ package com.resumen.isst.resumenes.model;
 
 import java.util.*;
 
-
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
@@ -15,6 +15,11 @@ public class Resumen {
     @Id @GeneratedValue(strategy = GenerationType.AUTO) private Long id;
 
     private String titulo;
+
+    @ManyToOne
+    @JoinColumn(name = "escritor_id")
+    @JsonBackReference("escritor-resumenes")
+    private Usuario escritor;
 
     private String autor;
 
@@ -86,6 +91,14 @@ public class Resumen {
 
     public void setTitulo(String titulo) {
         this.titulo = titulo;
+    }
+
+    public Usuario getEscritor() {
+        return escritor;
+    }
+
+    public void setEscritor(Usuario escritor) {
+        this.escritor = escritor;
     }
 
 

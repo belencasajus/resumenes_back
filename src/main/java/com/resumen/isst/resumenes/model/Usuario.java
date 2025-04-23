@@ -3,6 +3,7 @@ package com.resumen.isst.resumenes.model;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.*;
@@ -34,8 +35,12 @@ public class Usuario {
         joinColumns = @JoinColumn(name = "usuario_id"),
         inverseJoinColumns = @JoinColumn(name = "resumen_id")
         )
-         
-        private Set<Resumen> resumenesLeidos = new HashSet<>();
+    private Set<Resumen> resumenesLeidos = new HashSet<>();
+
+    @OneToMany(mappedBy = "escritor", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("escritor-resumenes")
+    private Set<Resumen> resumenesSubidos = new HashSet<>();
+    
         
     private RolUsuario rol = RolUsuario.VISITANTE;
 
