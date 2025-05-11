@@ -3,6 +3,8 @@ package com.resumen.isst.resumenes.model;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -10,13 +12,16 @@ import jakarta.validation.constraints.Email;
 @Entity
 public class Usuario {
 
-    @Id private String username;
+    @Id @GeneratedValue(strategy = GenerationType.AUTO) private Long id;
+    
+    @Column(unique= true, nullable= false)
+    private String username;
 
     String password;
 
     @Email private String email;
 
-    private String imagen;       //Guardamos la imagen como una URL
+    private String imagen;      
     
     @ManyToMany @JoinTable(
         name = "favoritos",
@@ -29,26 +34,29 @@ public class Usuario {
         name = "resumenes_leidos",
         joinColumns = @JoinColumn(name = "usuario_id"),
         inverseJoinColumns = @JoinColumn(name = "resumen_id")
-        ) private Set<Resumen> resumenesLeidos = new HashSet<>();
+        )
+    private Set<Resumen> resumenesLeidos = new HashSet<>();
+
+    @OneToMany(mappedBy = "escritor", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("escritor-resumenes")
+    private Set<Resumen> resumenesSubidos = new HashSet<>();
+    
         
     private RolUsuario rol = RolUsuario.VISITANTE;
-    
-    private boolean esEscritor;
 
     @OneToOne(mappedBy = "usuario", cascade= CascadeType.ALL, orphanRemoval=true) private Suscripcion suscripcion;
 
-    @OneToOne(mappedBy = "usuario", cascade= CascadeType.ALL, orphanRemoval=true) private Contrato contrato;
 
-    @OneToMany(mappedBy="escritor") private Set<Resumen> resumenesEscritos = new HashSet<>();
-
-    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true) private Set<Valoracion> valoraciones = new HashSet<>();
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true) 
+    @JsonManagedReference("usuario-valoraciones")
+    private Set<Valoracion> valoraciones = new HashSet<>();
 
     public Usuario() {
     }
 
     public Usuario(String username, String password, @Email String email, String imagen, Set<Resumen> favoritos,
-            Set<Resumen> resumenesLeidos, RolUsuario rol, boolean esEscritor, Suscripcion suscripcion,
-            Contrato contrato, Set<Resumen> resumenesEscritos, Set<Valoracion> valoraciones) {
+            Set<Resumen> resumenesLeidos, RolUsuario rol, Suscripcion suscripcion,
+            Set<Valoracion> valoraciones) {
         this.username = username;
         this.password = password;
         this.email = email;
@@ -56,10 +64,7 @@ public class Usuario {
         this.favoritos = favoritos;
         this.resumenesLeidos = resumenesLeidos;
         this.rol = rol;
-        this.esEscritor = esEscritor;
         this.suscripcion = suscripcion;
-        this.contrato = contrato;
-        this.resumenesEscritos = resumenesEscritos;
         this.valoraciones = valoraciones;
     }
 
@@ -108,24 +113,10 @@ public class Usuario {
     }
 
     public void setRol(RolUsuario rol) {
-        if (rol.equals(RolUsuario.LECTOR)) {                            //Dice el chat que esta parte va en el servicio
-            if(this.suscripcion == null){
-                this.suscripcion = new Suscripcion();
-                this.suscripcion.setUsuario(this);
-            }
-        }
-
         this.rol = rol;
     }
 
-    public boolean getEsEscritor() {
-        return esEscritor;
-    }
-
-    public void setEsEscritor(boolean esEscritor) {
-        this.esEscritor = esEscritor;
-    }
-
+ 
     public Set<Resumen> getResumenesLeidos() {
         return resumenesLeidos;
     }
@@ -146,25 +137,7 @@ public class Usuario {
         }
     }
 
-    public Contrato getContrato() {
-        return contrato;
-    }
 
-    public void setContrato(Contrato contrato) {
-        this.contrato = contrato;
-        this.setEsEscritor(true);
-        if(contrato != null && contrato.getUsuario() != this) {
-            contrato.setUsuario(this);
-        }
-    }
-
-    public Set<Resumen> getResumenesEscritos() {
-        return resumenesEscritos;
-    }
-
-    public void setResumenesEscritos(Set<Resumen> resumenesEscritos) {
-        this.resumenesEscritos = resumenesEscritos;
-    }
 
     public Set<Valoracion> getValoraciones() {
         return valoraciones;
@@ -195,22 +168,6 @@ public class Usuario {
         resumen.getUsuariosLeido().remove(this);
     }
 
-    public void addResumenEscrito(Resumen resumen) {
-        if(esEscritor){
-            this.resumenesEscritos.add(resumen);
-            resumen.setEscritor(this);
-        } else {
-            throw new IllegalStateException("El usuario no es escritor");
-        }
-    }
-
-    public void removeResumenEscrito(Resumen resumen) {
-        if(esEscritor){
-            this.resumenesEscritos.remove(resumen);
-        } else {
-            throw new IllegalStateException("El usuario no es escritor");
-        }
-    }
 
     public void addValoracion(Valoracion valoracion) {
         this.valoraciones.add(valoracion);
@@ -226,12 +183,13 @@ public class Usuario {
         }
     }
 
+    
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((username == null) ? 0 : username.hashCode());
+        result = prime * result + ((id == null) ? 0 : id.hashCode());
         return result;
     }
 
@@ -244,10 +202,10 @@ public class Usuario {
         if (getClass() != obj.getClass())
             return false;
         Usuario other = (Usuario) obj;
-        if (username == null) {
-            if (other.username != null)
+        if (id == null) {
+            if (other.id != null)
                 return false;
-        } else if (!username.equals(other.username))
+        } else if (!id.equals(other.id))
             return false;
         return true;
     }
@@ -255,7 +213,7 @@ public class Usuario {
     @Override
     public String toString() {
         return "Usuario [username=" + username + ", email=" + email +  ", rol=" + rol
-                + ", esEscritor=" + esEscritor + "]";
+                + "]";
     }
 
 }

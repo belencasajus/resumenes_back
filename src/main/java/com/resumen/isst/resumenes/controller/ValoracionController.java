@@ -4,15 +4,19 @@ import com.resumen.isst.resumenes.model.Valoracion;
 import com.resumen.isst.resumenes.model.Usuario;
 import com.resumen.isst.resumenes.model.Resumen;
 import com.resumen.isst.resumenes.repository.ValoracionRepository;
+
+import jakarta.servlet.http.HttpSession;
+
+
 import com.resumen.isst.resumenes.repository.UsuarioRepository;
 import com.resumen.isst.resumenes.repository.ResumenRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -54,11 +58,20 @@ public class ValoracionController {
      * "comentario": "Esto es un resumen muy interesante"
      * }
      */
-    @PostMapping("/resumenes/{resumenId}/valoraciones")
-    public ResponseEntity<?> create(@PathVariable Long resumenId, @RequestBody Valoracion nuevaValoracion, Principal principal) {
-        Usuario usuario = usuarioRepository.findByUsername(principal.getName());
+    @Transactional
+    @PostMapping("/valoraciones/{resumenId}")
+    public ResponseEntity<?> create(@PathVariable Long resumenId, @RequestBody Valoracion nuevaValoracion, HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Usuario no autenticado");
+        }
+
+        Usuario usuario = usuarioRepository.findByUsername(username);
 
         return resumenRepository.findById(resumenId).map(resumen -> {
+            if (!usuario.getResumenesLeidos().contains(resumen)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Debes leer el resumen antes de poder valorarlo.");
+            }
             //Verificar si ya existe una valoracion del usuario
             Optional<Valoracion> existente = valoracionRepository.findByUsuarioAndResumen(usuario, resumen);
             if (existente.isPresent()) {
@@ -82,9 +95,14 @@ public class ValoracionController {
 
     //Elimina una valoracion (solo el propio usuario puede)
     @DeleteMapping("/valoraciones/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id, Principal principal) {
+    public ResponseEntity<?> delete(@PathVariable Long id, HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Usuario no autenticado");
+        }
+
         return valoracionRepository.findById(id).map(valoracion -> {
-            Usuario usuario = usuarioRepository.findByUsername(principal.getName());
+            Usuario usuario = usuarioRepository.findByUsername(username);
             if (!valoracion.getUsuario().equals(usuario)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No tienes permisos para borrar esta valoración");
             }

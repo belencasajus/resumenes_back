@@ -2,6 +2,10 @@ package com.resumen.isst.resumenes.model;
 
 import java.util.*;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -12,48 +16,59 @@ public class Resumen {
 
     private String titulo;
 
+    @ManyToOne
+    @JoinColumn(name = "escritor_id")
+    @JsonBackReference("escritor-resumenes")
+    private Usuario escritor;
+
     private String autor;
 
     private String imagen;    //imagen tiene que ser una url
 
     private boolean premium;
 
-    private String genero;
+    @ManyToOne
+    @JoinColumn(name = "categoria_id")
+    private Categoria categoria;
 
     @PositiveOrZero @DecimalMax("5.0") private double valoracionMedia;
 
-    @Lob private String texto;
+    @Column(columnDefinition = "TEXT")
+    private String texto;
 
     private String audio;
 
     private boolean revisado=false;
 
-    @ManyToOne private Usuario escritor;
+    @JsonIgnore
+    @ManyToMany(mappedBy = "favoritos") private Set<Usuario> 
+    usuariosFavorito = new HashSet<>();
 
-    @ManyToMany(mappedBy = "favoritos") private Set<Usuario> usuariosFavorito = new HashSet<>();
+    @ManyToMany(mappedBy = "resumenesLeidos") 
+    @JsonIgnore
+    private Set<Usuario> usuariosLeido = new HashSet<>();
 
-    @ManyToMany(mappedBy = "resumenesLeidos") private Set<Usuario> usuariosLeido = new HashSet<>();
-
-    @OneToMany(mappedBy = "resumen", cascade = CascadeType.ALL, orphanRemoval = true) private Set<Valoracion> valoraciones= new HashSet<>();
+    @OneToMany(mappedBy = "resumen", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("resumen-valoraciones")
+    private Set<Valoracion> valoraciones= new HashSet<>();
 
     public Resumen() {
     }
 
-    public Resumen(Long id, String titulo, String autor, String imagen, boolean premium, String genero,
+    public Resumen(Long id, String titulo, String autor, String imagen, boolean premium, Categoria categoria,
             @PositiveOrZero @DecimalMax("5.0") double valoracionMedia, String texto, String audio, boolean revisado,
-            Usuario escritor, Set<Usuario> usuariosFavorito, Set<Usuario> usuariosLeido,
+            Set<Usuario> usuariosFavorito, Set<Usuario> usuariosLeido,
             Set<Valoracion> valoraciones) {
         this.id = id;
         this.titulo = titulo;
         this.autor = autor;
         this.imagen = imagen;
         this.premium = premium;
-        this.genero = genero;
+        this.categoria = categoria;
         this.valoracionMedia = valoracionMedia;
         this.texto = texto;
         this.audio = audio;
         this.revisado = revisado;
-        this.escritor = escritor;
         this.usuariosFavorito = usuariosFavorito;
         this.usuariosLeido = usuariosLeido;
         this.valoraciones = valoraciones;
@@ -76,6 +91,14 @@ public class Resumen {
 
     public void setTitulo(String titulo) {
         this.titulo = titulo;
+    }
+
+    public Usuario getEscritor() {
+        return escritor;
+    }
+
+    public void setEscritor(Usuario escritor) {
+        this.escritor = escritor;
     }
 
 
@@ -108,16 +131,13 @@ public class Resumen {
         this.premium = premium;
     }
 
-
-    public String getGenero() {
-        return genero;
+    public Categoria getCategoria() {
+        return categoria;
     }
 
-
-    public void setGenero(String genero) {
-        this.genero = genero;
+    public void setCategoria(Categoria categoria) {
+        this.categoria = categoria;
     }
-
 
     public double getValoracionMedia() {
         return valoracionMedia;
@@ -156,16 +176,6 @@ public class Resumen {
 
     public void setRevisado(boolean revisado) {
         this.revisado = revisado;
-    }
-
-
-    public Usuario getEscritor() {
-        return escritor;
-    }
-
-
-    public void setEscritor(Usuario usuario) {
-        this.escritor = usuario;
     }
 
     public Set<Usuario> getUsuariosFavorito() {
@@ -227,8 +237,8 @@ public class Resumen {
     @Override
     public String toString() {
         return "Resumen [id=" + id + ", titulo=" + titulo + ", autor=" + autor  + ", premium="
-                + premium + ", genero=" + genero + ", valoracionMedia=" + valoracionMedia 
-                + ", revisado=" + revisado + ", escritor=" + (escritor != null? escritor.getUsername() : "null") + "]";
+                + premium + ", categoria=" + categoria + ", valoracionMedia=" + valoracionMedia 
+                + ", revisado=" + revisado + "]";
     }
 
 
@@ -265,6 +275,8 @@ public class Resumen {
         usuariosLeido.remove(usuario);
         usuario.getResumenesLeidos().remove(this);
     }
+
+
 
 
 }
